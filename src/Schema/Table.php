@@ -30,15 +30,42 @@ class Table
         $this->indexColumns = [];
     }
 
+    public static function create($tableName, $tableColumns)
+    {
+        $table = new Table();
+        $table->sqlQuery = 'CREATE TABLE `' . $tableName . '` (';
+        $table->tableName = $table;
+        $tableColumns($table);
+        $table->sqlQuery .= $table->generateIndexedColumns();
+        if ($table->sqlQuery[strlen($table->sqlQuery) - 1] == ',')
+            $table->sqlQuery = substr($table->sqlQuery, 0, strlen($table->sqlQuery) - 1);
+        $table->sqlQuery .= ')';
+        return $table->sqlQuery;
+    }
+
+    public function generateIndexedColumns()
+    {
+        foreach ($this->indexColumns as $index => $indexColumn) {
+            $this->indexColumns[$index] = 'INDEX (`' . $indexColumn . '`)';
+        }
+        return implode(",", $this->indexColumns);
+    }
+
+    public function __call($name, $arguments)
+    {
+        $name = '_' . $name;
+        $this->{$name}(...$arguments);
+    }
+
     private function _string($name, $length = 255)
     {
-        $this->sqlQuery .= '`' . $name . '` VARCHAR(' . $length . ') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
+        $this->sqlQuery .= '`' . $name . '` VARCHAR(' . $length . ') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,';
         $this->lastColumn = $name;
     }
 
     private function _integer($name, $auto_increamet = false, $unsinged = false)
     {
-        $this->sqlQuery .= '`' . $name . '` INT(10)';
+        $this->sqlQuery .= '`' . $name . '` INT(10),';
         $this->lastColumn = $name;
     }
 
@@ -116,29 +143,5 @@ class Table
     {
 
 
-    }
-
-    public function __call($name, $arguments)
-    {
-        $this->_{$name}(...$arguments);
-    }
-
-    public function generateIndexedColumns()
-    {
-        foreach ($this->indexColumns as $index => $indexColumn) {
-            $this->indexColumns[$index] = 'INDEX (`' . $indexColumn . '`)';
-        }
-        return implode(",", $this->indexColumns);
-    }
-
-    public static function create($tableName, $tableColumns)
-    {
-        $table = new Table();
-        $table->sqlQuery = 'CREATE TABLE `' . $tableName . '` (';
-        $table->tableName = $table;
-        $tableColumns($table);
-        $table->sqlQuery .= $table->generateIndexedColumns();
-        $table->sqlQuery .= ')';
-        return $table->sqlQuery;
     }
 }
